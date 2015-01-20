@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+source $DIR/script-common
+
+BUILD_DIR=$1
+CACHE_DIR=$2
+NIX_ROOT_PATH=$3
+
+test -d /nix # fail here if /nix doesn't exist
+
+if [ -d "$HOME/.nix-profile" ]; then
+  rm -f $HOME/.nix-profile
+  ln -s /nix/var/nix/profiles/default $HOME/.nix-profile
+else
+  cd /nix
+  ./install | indent
+fi
+
+source $HOME/.nix-profile/etc/profile.d/nix.sh
+
+
+if [ -e $BUILD_DIR/shell.nix ]; then
+  NIX_FILE=$BUILD_DIR/shell.nix 
+elif [ -e $BUILD_DIR/default.nix ]; then
+  NIX_FILE=$BUILD_DIR/default.nix 
+else
+  echo "No shell.nix or default.nix found!" | indent
+  false
+fi
+
+topic "Installing from $NIX_FILE"
+
+# suppress locale warnings
+export LANG="C"
+export LC_ALL="C"
+
+# nix-build registers app as a garbage collector root -- prevents its being removed
+nix-build --quiet $NIX_FILE | indent
+
+#nix-env -i installs it into the ~/.nix-profile/bin
+nix-env -f $NIX_FILE -i '*' | indent
+
+topic "Clearing unnecessary packages"
+# nix-collect-garbage -d | indent
+
+topic "Creating profile.d"
+
+mkdir -p $BUILD_DIR/.profile.d
+cat <<EOF > $BUILD_DIR/.profile.d/000_nix.sh
+export PATH=\$HOME/.nix-profile/bin:\$HOME/opt/bin:\$PATH
+export NIX_ROOT_PATH=$NIX_ROOT_PATH
+EOF
+
+topic "Complete. Run your application preceded by proot:"
+echo "e.g. \$HOME/opt/bin/proot -b \$NIX_ROOT_PATH:/nix myapp" | indent

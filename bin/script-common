@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+indent() {
+  sed -u 's/^/       /'
+}
+
+trap 'err_handler $?' ERR
+
+err_handler() {
+  trap - ERR
+  let i=0 exit_status=$1
+  echo "Aborting on error $exit_status:"
+  echo "--------------------"
+  while caller $i; do ((i++)); done
+  exit $exit_status
+}
+
+topic() {
+  echo "-----> $*"
+}
+
+fetch() {
+  curl -sSfL -o "$1" "$2"
+}

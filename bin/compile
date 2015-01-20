@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+# Usage:
+#
+#     $ bin/compile <build-dir> <cache-dir> <env-path>
+
+set -eo pipefail
+set -o errtrace
+set -o nounset
+
+BUILD_DIR=$1
+CACHE_DIR=$2
+ENV_DIR=$3
+
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+source $DIR/script-common
+
+mkdir -p $CACHE_DIR
+
+topic "Installing PRoot in $HOME"
+
+if [ ! -x "$HOME/opt/bin/proot" ]; then
+  mkdir -p $HOME/opt/bin
+  cd $HOME/opt/bin
+  fetch proot http://static.proot.me/proot-x86_64
+  chmod u+x proot
+fi
+
+export PATH=$HOME/opt/bin:$PATH
+
+NIX_ROOT_PATH=$CACHE_DIR/nix-mnt/nix-1.8-x86_64-linux/
+
+if [ -d "$NIX_ROOT_PATH" ]; then
+  topic "nix found in cache; reusing"
+else
+  topic "Installing nix 1.8"
+
+  mkdir -p $CACHE_DIR/nix-mnt
+  cd $CACHE_DIR/nix-mnt
+  fetch nix-1.8.tar.bz2 http://hydra.nixos.org/build/17897595/download/1/nix-1.8-x86_64-linux.tar.bz2
+  tar xjf nix-1.8.tar.bz2
+  echo "done extracting" | indent
+fi
+
+$HOME/opt/bin/proot -b $NIX_ROOT_PATH:/nix bash $DIR/nix-install-proot $BUILD_DIR $CACHE_DIR $NIX_ROOT_PATH

@@ -112,9 +112,10 @@ cat <<EOF > $BUILD_DIR/run_proot.sh
 
 source $BUILD_DIR/.nix-profile/etc/profile.d/nix.sh
 $AWS get \$NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME \$HOME/$CLOSURE_NAME
+cat \$HOME/$CLOSURE_NAME | nix-store --import
 
+nix-env -i -f $NIX_FILE
 CMD=\$1
-nix-store --import \$HOME/$CLOSURE_NAME
 \$CMD "\${@:1}"
 EOF
 

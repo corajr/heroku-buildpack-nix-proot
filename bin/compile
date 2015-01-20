@@ -43,8 +43,6 @@ else
   echo "done extracting" | indent
 fi
 
-if [ -z "$USER" ]; then
-  export USER=$(whoami)
-fi
+export USER=$(whoami)
 
 $HOME/opt/bin/proot -b $NIX_ROOT_PATH:/nix bash $DIR/nix-install-proot $BUILD_DIR $CACHE_DIR $NIX_ROOT_PATH

@@ -16,33 +16,41 @@ DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 source $DIR/script-common
 
-mkdir -p $CACHE_DIR
+export_env_dir $ENV_DIR
 
-topic "Installing PRoot in $HOME"
+mkdir -p $CACHE_DIR/bin
 
-if [ ! -x "$HOME/opt/bin/proot" ]; then
-  mkdir -p $HOME/opt/bin
-  cd $HOME/opt/bin
-  fetch proot http://static.proot.me/proot-x86_64
-  chmod u+x proot
-fi
+download_and_install $CACHE_DIR $BUILD_DIR proot http://static.proot.me/proot-x86_64
+download_and_install $CACHE_DIR $BUILD_DIR aws https://raw.githubusercontent.com/timkay/aws/master/aws
 
-export PATH=$HOME/opt/bin:$PATH
+# add executables to path
+export PATH=$BUILD_DIR/bin:$PATH
 
-NIX_ROOT_PATH=$CACHE_DIR/nix-mnt/nix-1.8-x86_64-linux/
-
-if [ -d "$NIX_ROOT_PATH" ]; then
-  topic "nix found in cache; reusing"
-else
-  topic "Installing nix 1.8"
-
-  mkdir -p $CACHE_DIR/nix-mnt
-  cd $CACHE_DIR/nix-mnt
-  fetch nix-1.8.tar.bz2 http://hydra.nixos.org/build/17897595/download/1/nix-1.8-x86_64-linux.tar.bz2
-  tar xjf nix-1.8.tar.bz2
-  echo "done extracting" | indent
-fi
+NIX_VERSION=1.8
+NIX_VERSION_FULL=nix-$NIX_VERSION-x86_64-linux
+NIX_ROOT_CACHE_PATH=$CACHE_DIR/nix-mnt/$NIX_VERSION_FULL
+NIX_ROOT_PATH=$BUILD_DIR/nix-mnt/$NIX_VERSION_FULL
 
 export USER=$(whoami)
 
-$HOME/opt/bin/proot -b $NIX_ROOT_PATH:/nix bash $DIR/nix-install-proot $BUILD_DIR $CACHE_DIR $NIX_ROOT_PATH
+if [ -d "$NIX_ROOT_CACHE_PATH" ]; then
+  topic "nix $NIX_VERSION found in cache"
+else
+  topic "Downloading and installing nix $NIX_VERSION to cache"
+
+  mkdir -p $CACHE_DIR/nix-mnt
+  cd $CACHE_DIR/nix-mnt
+  fetch nix-1.8.tar.bz2 http://hydra.nixos.org/build/17897595/download/1/${NIX_VERSION_FULL}.tar.bz2
+  tar xjf nix-1.8.tar.bz2
+  echo "Done extracting." | indent
+fi
+
+$BUILD_DIR/bin/proot -b $NIX_ROOT_CACHE_PATH:/nix bash $DIR/nix-install-proot $BUILD_DIR $CACHE_DIR $NIX_ROOT_CACHE_PATH $NIX_ROOT_PATH
+
+topic "Copying nix to build dir"
+mkdir -p $NIX_ROOT_PATH
+rsync -a $NIX_ROOT_CACHE_PATH/ $NIX_ROOT_PATH
+
+topic "Complete! Make sure your Procfile uses run_proot.sh,"
+echo "like so:" | indent
+echo "web: run_proot.sh myapp -p \$PORT" | indent

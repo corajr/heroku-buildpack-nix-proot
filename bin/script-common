@@ -22,3 +22,32 @@ topic() {
 fetch() {
   curl -sSfL -o "$1" "$2"
 }
+
+download_and_install() {
+  CACHE_DIR="$1"
+  BUILD_DIR="$2"
+  if [ -x "$CACHE_DIR/bin/$3" ]; then
+    topic "$3 found in cache"
+  else
+    topic "Downloading $3"
+    mkdir -p $CACHE_DIR/bin
+    cd $CACHE_DIR/bin
+    fetch $3 $4
+    chmod u+x $3
+  fi
+  mkdir -p $BUILD_DIR/bin
+  cp -f $CACHE_DIR/bin/$3 $BUILD_DIR/bin/$3
+}
+
+export_env_dir() {
+  env_dir=$1
+  whitelist_regex=${2:-''}
+  blacklist_regex=${3:-'^(PATH|GIT_DIR|CPATH|CPPATH|LD_PRELOAD|LIBRARY_PATH)$'}
+  if [ -d "$env_dir" ]; then
+    for e in $(ls $env_dir); do
+      echo "$e" | grep -E "$whitelist_regex" | grep -qvE "$blacklist_regex" &&
+      export "$e=$(cat $env_dir/$e)"
+      :
+    done
+  fi
+}

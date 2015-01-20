@@ -6,20 +6,37 @@ source $DIR/script-common
 
 BUILD_DIR=$1
 CACHE_DIR=$2
-NIX_ROOT_PATH=$3
+NIX_ROOT_CACHE_PATH=$3
+NIX_ROOT_PATH=$4
 
 test -d /nix # fail here if /nix doesn't exist
 
-if [ -d "$HOME/.nix-profile" ]; then
-  rm -f $HOME/.nix-profile
-  ln -s /nix/var/nix/profiles/default $HOME/.nix-profile
+# suppress locale warnings
+export LANG="C"
+export LC_ALL="C"
+
+if [ -z "${NIX_S3_KEY:-}" ] || [ -z "${NIX_S3_SECRET:-}" ] || [ -z "${NIX_S3_BUCKET:-}" ]; then
+  topic "S3 info not set in configuration; closure will not be saved!"
+  false
+fi
+
+# turn variables into those the AWS tool understands
+export EC2_ACCESS_KEY=$NIX_S3_KEY
+export EC2_SECRET_KEY=$NIX_S3_SECRET
+
+if [ -d "/nix/var/nix/profiles/default" ]; then
+  rm -f $BUILD_DIR/.nix-profile
+  ln -s /nix/var/nix/profiles/default $BUILD_DIR/.nix-profile
 else
   cd /nix
   ./install | indent
 fi
 
-source $HOME/.nix-profile/etc/profile.d/nix.sh
+source $BUILD_DIR/.nix-profile/etc/profile.d/nix.sh
 
+export PATH=$BUILD_DIR/.nix-profile/bin:$PATH
+
+AWS=$BUILD_DIR/bin/aws
 
 if [ -e $BUILD_DIR/shell.nix ]; then
   NIX_FILE=$BUILD_DIR/shell.nix 
@@ -30,28 +47,75 @@ else
   false
 fi
 
-topic "Installing from $NIX_FILE"
+PROG_NAME=$(nix-env -qa -f $NIX_FILE | head)
+PROG_PROFILE=/nix/var/nix/profiles/$PROG_NAME
 
-# suppress locale warnings
-export LANG="C"
-export LC_ALL="C"
+CLOSURE_NAME=$PROG_NAME.closure
+CLOSURE=$CACHE_DIR/$PROG_NAME.closure
+
+topic "Searching for closure on S3:"
+if $($AWS ls $NIX_S3_BUCKET | grep nix-closures/$CLOSURE_NAME); then
+  echo "Closure found, downloading to $CLOSURE" | indent
+  $AWS get nix-closures/$CLOSURE_NAME $CLOSURE
+else
+  echo "Closure not found; will build from scratch." | indent
+fi
+
+cd $BUILD_DIR
+
+topic "Change to $PROG_NAME profile"
+nix-env -Q -p $PROG_PROFILE -iA nixpkgs.nix
+
+nix-env --switch-profile $PROG_PROFILE
+
+if [ -e $CLOSURE ]; then
+  topic "Importing previous environment from $CLOSURE"
+  nix-store --import < $CLOSURE
+fi
+
+topic "Building $PROG_NAME from $NIX_FILE"
 
 # nix-build registers app as a garbage collector root -- prevents its being removed
-nix-build --quiet $NIX_FILE | indent
+nix-build --cores 0 -Q $NIX_FILE | indent
 
-#nix-env -i installs it into the ~/.nix-profile/bin
-nix-env -f $NIX_FILE -i '*' | indent
+topic "Installing application in $PROG_NAME profile"
+nix-env -Q -f $NIX_FILE -i '*'
 
-topic "Clearing unnecessary packages"
-# nix-collect-garbage -d | indent
+topic "Storing updated application closure in $CLOSURE"
+nix-store --export $(nix-store -qR $BUILD_DIR/result) > $CLOSURE
 
-topic "Creating profile.d"
+topic "Uploading closure to S3"
+$AWS put $NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME $CLOSURE
+
+topic "Return to default nix profile"
+nix-env --switch-profile /nix/var/nix/profiles/default
+
+topic "Deleting $PROG_NAME profile and updates"
+rm $PROG_PROFILE*
+
+topic "Clearing packages"
+nix-collect-garbage -d | indent
+
+topic "Creating .profile.d"
 
 mkdir -p $BUILD_DIR/.profile.d
 cat <<EOF > $BUILD_DIR/.profile.d/000_nix.sh
-export PATH=\$HOME/.nix-profile/bin:\$HOME/opt/bin:\$PATH
-export NIX_ROOT_PATH=$NIX_ROOT_PATH
+export PATH=\$HOME/.nix-profile/bin:\$HOME/bin:\$PATH
+export EC2_ACCESS_KEY=\$NIX_S3_KEY
+export EC2_SECRET_KEY=\$NIX_S3_SECRET
 EOF
 
-topic "Complete. Run your application preceded by proot:"
-echo "e.g. \$HOME/opt/bin/proot -b \$NIX_ROOT_PATH:/nix myapp" | indent
+topic "Creating run_proot.sh"
+
+cat <<EOF > $BUILD_DIR/run_proot.sh
+#!$BUILD_DIR/bin/proot -b $NIX_ROOT_PATH:/nix bash
+
+source $BUILD_DIR/.nix-profile/etc/profile.d/nix.sh
+$AWS get \$NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME \$HOME/$CLOSURE_NAME
+
+CMD=\$1
+nix-store --import \$HOME/$CLOSURE_NAME
+\$CMD "\${@:1}"
+EOF
+
+chmod u+x $BUILD_DIR/run_proot.sh

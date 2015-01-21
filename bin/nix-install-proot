@@ -60,7 +60,7 @@ CLOSURE=$CACHE_DIR/$PROG_NAME.closure
 topic "Searching for closure on S3:"
 if $($AWS ls $NIX_S3_BUCKET | grep nix-closures/$CLOSURE_NAME); then
   echo "Closure found, downloading to $CLOSURE" | indent
-  $AWS get nix-closures/$CLOSURE_NAME $CLOSURE
+  $AWS get nix-closures/$CLOSURE_NAME $CLOSURE | indent
 else
   echo "Closure not found; will build from scratch." | indent
 fi
@@ -68,22 +68,22 @@ fi
 cd $BUILD_DIR
 
 topic "Change to $PROG_NAME profile"
-nix-env -Q -p $PROG_PROFILE -iA nixpkgs.nix
+nix-env -Q -p $PROG_PROFILE -iA nixpkgs.nix 2>&1 | indent
 
-nix-env --switch-profile $PROG_PROFILE
+nix-env --switch-profile $PROG_PROFILE 2>&1 | indent
 
 if [ -e $CLOSURE ]; then
   topic "Importing previous environment from $CLOSURE"
-  nix-store --import < $CLOSURE
+  nix-store --import < $CLOSURE 2>&1 | indent
 fi
 
 topic "Building $PROG_NAME from $NIX_FILE"
 
 # nix-build registers app as a garbage collector root -- prevents its being removed
-nix-build --cores 0 -Q $NIX_FILE | indent
+nix-build --cores 0 -Q $NIX_FILE 2>&1 | indent
 
 topic "Installing application in $PROG_NAME profile"
-nix-env -Q -f $NIX_FILE -i '*'
+nix-env -Q -i -f $NIX_FILE 2>&1 | indent
 
 topic "Storing updated application closure in $CLOSURE"
 nix-store --export $(nix-store -qR $BUILD_DIR/result) > $CLOSURE
@@ -98,7 +98,7 @@ topic "Deleting $PROG_NAME profile and updates"
 rm $PROG_PROFILE*
 
 topic "Clearing packages"
-nix-collect-garbage -d | indent
+nix-collect-garbage -d 2>&1 | indent
 
 topic "Creating .profile.d"
 

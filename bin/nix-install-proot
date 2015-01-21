@@ -17,6 +17,10 @@ export LC_ALL="C"
 
 if [ -z "${NIX_S3_KEY:-}" ] || [ -z "${NIX_S3_SECRET:-}" ] || [ -z "${NIX_S3_BUCKET:-}" ]; then
   topic "S3 info not set in configuration; closure will not be saved!"
+  echo "Make sure the following variables are set:" | indent
+  if [ -z "${NIX_S3_KEY:-}" ]; then echo "NIX_S3_KEY" | indent; fi
+  if [ -z "${NIX_S3_SECRET:-}" ]; then echo "NIX_S3_SECRET" | indent; fi
+  if [ -z "${NIX_S3_BUCKET:-}" ]; then echo "NIX_S3_BUCKET" | indent; fi
   false
 fi
 

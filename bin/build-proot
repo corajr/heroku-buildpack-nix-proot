@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+set -o errtrace
+set -o nounset
+
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+source $DIR/script-common
+
+test -d /nix
+
+check_for_s3
+
+export BUILD_DIR
+
+# define NIX_FILE, PROG_NAME, PROG_PROFILE, CLOSURE_NAME, and CLOSURE
+prog=$(prog_name_profile_closure) || echo $(prog_name_profile_closure)
+eval $prog
+
+topic "Installing nix into $PROG_NAME profile"
+nix-env -Q -p $PROG_PROFILE -i $nix
+
+topic "Switching to $PROG_NAME profile"
+nix-env --switch-profile $PROG_PROFILE
+
+test -e $CLOSURE || try_download_closure
+
+if [ -e $CLOSURE ]; then
+  topic "Importing previous environment from $CLOSURE"
+  nix-store --import < $CLOSURE 2>&1| indent
+fi
+
+topic "Building $PROG_NAME from $NIX_FILE"
+
+# nix-build registers app as a garbage collector root -- prevents its being removed
+nix-build --cores 0 $NIX_FILE 2>&1| indent
+
+topic "Installing $PROG_NAME"
+nix-env -Q -i -f $NIX_FILE 2>&1| indent
+
+topic "Storing updated application closure in $CLOSURE"
+#swap stdout/stderr so the closure goes to stderr and stderr to stdout
+(nix-store --export $(nix-store -q --references $BUILD_DIR/result | grep -v ghc) 3>&1 1>&2- 2>&3-) 2> $CLOSURE | indent
+
+topic "Uploading closure to S3"
+upload_closure

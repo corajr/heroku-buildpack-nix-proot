@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+set -o errtrace
+set -o nounset
+
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+source $DIR/script-common
+
+check_for_s3
+
+REAL_APP_DIR=${REAL_APP_DIR:-$HOME}
+export BUILD_DIR=${BUILD_DIR:-$REAL_APP_DIR}
+
+echo "Build dir: $BUILD_DIR" | indent
+
+declare -x NIX_ROOT_PATH
+
+if [ "$BUILD_DIR" = "$REAL_APP_DIR" ] && [ ! -w $REAL_APP_DIR ]; then     # we are in a one-off dyno; home is not writable
+  rsync -a $BUILD_DIR/nix-mnt /tmp
+  NIX_ROOT_PATH=/tmp/nix-mnt/$NIX_VERSION_FULL
+else
+  NIX_ROOT_PATH=$BUILD_DIR/nix-mnt/$NIX_VERSION_FULL
+fi
+
+export NIX_S3_KEY NIX_S3_SECRET NIX_S3_BUCKET
+
+$BUILD_DIR/bin/proot -b $NIX_ROOT_PATH:/nix bash $DIR/build-proot

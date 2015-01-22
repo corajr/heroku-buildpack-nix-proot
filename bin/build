@@ -17,7 +17,7 @@ echo "Build dir: $BUILD_DIR" | indent
 
 declare -x NIX_ROOT_PATH
 
-if [ "$BUILD_DIR" = "$REAL_APP_DIR" ] && [ ! -w $REAL_APP_DIR ]; then     # we are in a one-off dyno; home is not writable
+if [ "$BUILD_DIR" = "$REAL_APP_DIR" ] || [ ! -w $REAL_APP_DIR ]; then     # we are in a one-off dyno; home is not writable
   rsync -a $BUILD_DIR/nix-mnt /tmp
   NIX_ROOT_PATH=/tmp/nix-mnt/$NIX_VERSION_FULL
 else

@@ -73,15 +73,25 @@ chmod u+x $BUILD_DIR/bin/build
 
 REAL_NIX_FILE=$REAL_APP_DIR/$(basename $NIX_FILE)
 
-topic "Creating run_proot.sh"
-cat <<EOF > $BUILD_DIR/bin/run_proot.sh
-#!$REAL_APP_DIR/bin/proot -b $APP_NIX_ROOT_PATH:/nix bash
+topic "Creating run_in_proot.sh"
+cat <<EOF > $BUILD_DIR/bin/run_in_proot.sh
+#!/bin/bash
 
+set -e
+test -d /nix && test -d $REAL_APP_DIR/.nix-profile
 source $REAL_APP_DIR/.nix-profile/etc/profile.d/nix.sh
 
-nix-env -i -f $REAL_NIX_FILE
 CMD=\$1
 \$CMD "\${@:2}"
+EOF
+
+chmod u+x $BUILD_DIR/bin/run_in_proot.sh
+
+topic "Creating run_proot.sh"
+cat <<EOF > $BUILD_DIR/bin/run_proot.sh
+#!/usr/bin/env bash
+
+$REAL_APP_DIR/bin/proot -b $APP_NIX_ROOT_PATH:/nix bash $REAL_APP_DIR/bin/run_in_proot.sh "\$@"
 EOF
 
 chmod u+x $BUILD_DIR/bin/run_proot.sh

@@ -15,7 +15,7 @@ check_for_s3
 export BUILD_DIR
 
 # define NIX_FILE, PROG_NAME, PROG_PROFILE, CLOSURE_NAME, and CLOSURE
-prog=$(prog_name_profile_closure) || echo $(prog_name_profile_closure)
+prog=$(prog_name_profile_closure)
 eval $prog
 
 topic "Installing nix into $PROG_NAME profile"

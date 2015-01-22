@@ -26,11 +26,9 @@ download_and_install $CACHE_DIR $BUILD_DIR aws https://raw.githubusercontent.com
 # add executables to path
 export PATH=$BUILD_DIR/bin:$PATH
 
-NIX_VERSION=1.8
+export NIX_VERSION=1.8
 NIX_VERSION_FULL=nix-$NIX_VERSION-x86_64-linux
 NIX_ROOT_CACHE_PATH=$CACHE_DIR/nix-mnt/$NIX_VERSION_FULL
-# take this from ./install; save space/time by reusing the bootstrapped nix
-export NIX_INSTALL_HASH=/nix/store/16za1lqa47rayyn9058i4a1nv358gnv5-nix-1.8
 export NIX_ROOT_PATH=$BUILD_DIR/nix-mnt/$NIX_VERSION_FULL
 
 export USER=$(whoami)

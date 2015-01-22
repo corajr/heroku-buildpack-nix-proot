@@ -29,13 +29,12 @@ export EC2_SECRET_KEY=$NIX_S3_SECRET
 # make sure that nix installs its link in the right place
 export HOME=$BUILD_DIR
 
-if [ -d "/nix/var/nix/profiles/default" ]; then
-  rm -f $BUILD_DIR/.nix-profile
-  ln -s /nix/var/nix/profiles/default $BUILD_DIR/.nix-profile
-else
-  cd /nix
-  ./install 2>&1| indent
-fi
+topic "Installing nix $NIX_VERSION"
+cd /nix
+./install 2>&1| indent
+
+# get $nix variable to install cached nix in new profile, later on
+eval $(grep nix= ./install | head)
 
 source $BUILD_DIR/.nix-profile/etc/profile.d/nix.sh
 
@@ -69,7 +68,7 @@ fi
 cd $BUILD_DIR
 
 topic "Change to $PROG_NAME profile"
-nix-env -Q -p $PROG_PROFILE -i "$NIX_INSTALL_HASH" 2>&1| indent
+nix-env -Q -p $PROG_PROFILE -i $nix 2>&1| indent
 
 nix-env --switch-profile $PROG_PROFILE 2>&1| indent
 

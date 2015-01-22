@@ -5,14 +5,15 @@ This buildpack installs dependencies using the [Nix](http://nixos.org/nix) packa
 Nix has a binary cache of many dependencies (including GHC and many Haskell libraries),
 with the potential to greatly accelerate the build process.
 
-This is a work-in-progress. The resulting app must be run within PRoot, incurring a
-performance penalty. An Amazon Web Services account with an S3 Bucket is also required
-to save the Nix closure between builds.
+The resulting app must be run within PRoot, incurring a performance penalty.
+An Amazon Web Services account with an S3 Bucket is also needed
+to save the Nix closure between builds. (This closure will be downloaded
+when your app is spun up on a new dyno for rapid deployment.)
 
 Usage
 -----
 
-Create a Procfile like this (run_proot.sh will be created by the build scripts):
+Create a Procfile something like this (run_proot.sh will be created by the build scripts):
 
 ```bash
 web: run_proot.sh myapp
@@ -36,8 +37,8 @@ git push heroku master
 Refs
 ----
 
-* the [PRoot instructions](https://nixos.org/wiki/How_to_install_nix_in_home_(on_another_distribution)#PRoot_Installation)
+* Script derived from the [PRoot instructions](https://nixos.org/wiki/How_to_install_nix_in_home_(on_another_distribution)#PRoot_Installation)
 on the Nix wiki.
-* [Tim Kay's AWS tool](http://timkay.com/aws/)
+* Uses [Tim Kay's AWS tool](http://timkay.com/aws/).
 
 Credit to [Brian McKenna](https://twitter.com/puffnfresh/status/521647022135590913) for the idea.

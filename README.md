@@ -6,9 +6,11 @@ Nix has a binary cache of many dependencies (including GHC and many Haskell libr
 with the potential to greatly accelerate the build process.
 
 The resulting app must be run within PRoot, incurring a performance penalty.
-An Amazon Web Services account with an S3 Bucket is also needed
-to save the Nix closure between builds. (This closure will be downloaded
-when your app is spun up on a new dyno for rapid deployment.)
+An Amazon Web Services account with an S3 Bucket is also required, as the buildpack
+must save and restore the Nix closure in order to install. (Note that for
+Haskell apps using larger frameworks like Yesod, this may be over 1.5 GB;
+make sure that your S3 bucket is in the same region as the dyno
+to take advantage of free data transfer.)
 
 Usage
 -----
@@ -28,17 +30,45 @@ heroku config:set NIX_S3_KEY=... \
                   NIX_S3_BUCKET=...
 ```
 
-Finally, push the app to initiate a build:
+The default behavior is to have the first `git push heroku master` set up Nix in
+the build cache and create a build environment, but not to build. If you want Nix
+to attempt a complete build on push, also set: 
+
+```bash
+heroku config:set NIX_BUILD_ON_PUSH=1
+```
+
+(Simply unset it to turn off. Build on push is *not recommended* for the first
+push of a larger app, as it may exceed the 15-minute build limit.)
+
+Then push the app:
 
 ```bash
 git push heroku master
 ```
 
+If you've specified to build on push above, nix will try to install your app.
+Otherwise, run a build command on a one-off dyno like so:
+
+```
+heroku run --size=PX build
+```
+
+Then re-deploy the app:
+
+```
+git commit --amend --no-edit
+git push -f heroku master
+```
+
 Refs
 ----
 
-* Script derived from the [PRoot instructions](https://nixos.org/wiki/How_to_install_nix_in_home_(on_another_distribution)#PRoot_Installation)
-on the Nix wiki.
-* Uses [Tim Kay's AWS tool](http://timkay.com/aws/).
+This approach is almost wholly lifted from Miëtek Bak's [Haskell on Heroku](https://haskellonheroku.com/).
 
-Credit to [Brian McKenna](https://twitter.com/puffnfresh/status/521647022135590913) for the idea.
+Credit to [Brian McKenna](https://twitter.com/puffnfresh/status/521647022135590913) for the idea of a Nix buildpack.
+
+The Nix install script is derived from the [PRoot instructions](https://nixos.org/wiki/How_to_install_nix_in_home_(on_another_distribution)#PRoot_Installation)
+on the Nix wiki.
+
+Finally, this buildpack uses [Tim Kay's AWS tool](http://timkay.com/aws/) to communicate with S3.

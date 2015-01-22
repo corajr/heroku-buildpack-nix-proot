@@ -51,3 +51,64 @@ export_env_dir() {
     done
   fi
 }
+
+suppress_locale_warnings() {
+  export LANG="C"
+  export LC_ALL="C"
+}
+
+locate_nix_file() {
+  if [ -e $BUILD_DIR/shell.nix ]; then
+    echo "$BUILD_DIR/shell.nix"
+  elif [ -e $BUILD_DIR/default.nix ]; then
+    echo "$BUILD_DIR/default.nix"
+  else
+    echo "No shell.nix or default.nix found!" | indent
+    false
+  fi
+}
+
+prog_name_profile_closure() {
+  if [ -z "${BUILD_DIR:-}" ]; then
+    echo "BUILD_DIR not set! Can't locate .nix file." | indent
+    false
+  fi
+  export BUILD_DIR
+  export nix_file=$(locate_nix_file)
+  prog_name=$(nix-env -qa -f "$nix_file" | head -n 1)
+  echo "export NIX_FILE=$nix_file;
+  PROG_NAME=$prog_name;
+  PROG_PROFILE=/nix/var/nix/profiles/\$PROG_NAME;
+  CLOSURE_NAME=\$PROG_NAME.closure;
+  CLOSURE=/tmp/\$CLOSURE_NAME"
+}
+
+
+check_for_s3() {
+  if [ -z "${NIX_S3_KEY:-}" ] || [ -z "${NIX_S3_SECRET:-}" ] || [ -z "${NIX_S3_BUCKET:-}" ]; then
+    topic "S3 info not set in configuration; closure cannot be loaded!"
+    echo "Make sure the following variables are set:" | indent
+    if [ -z "${NIX_S3_KEY:-}" ]; then echo "NIX_S3_KEY" | indent; fi
+    if [ -z "${NIX_S3_SECRET:-}" ]; then echo "NIX_S3_SECRET" | indent; fi
+    if [ -z "${NIX_S3_BUCKET:-}" ]; then echo "NIX_S3_BUCKET" | indent; fi
+    false
+  fi
+}
+
+try_download_closure() {
+  check_for_s3
+  export EC2_ACCESS_KEY=$NIX_S3_KEY
+  export EC2_SECRET_KEY=$NIX_S3_SECRET
+ 
+  set +e
+  $HOME/bin/aws get $NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME $CLOSURE 2>&1| indent
+  set -e
+}
+
+upload_closure() {
+  check_for_s3
+  export EC2_ACCESS_KEY=$NIX_S3_KEY
+  export EC2_SECRET_KEY=$NIX_S3_SECRET
+ 
+  $HOME/bin/aws get $NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME $CLOSURE 2>&1| indent
+}

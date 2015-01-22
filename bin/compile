@@ -27,8 +27,8 @@ download_and_install $CACHE_DIR $BUILD_DIR aws https://raw.githubusercontent.com
 export PATH=$BUILD_DIR/bin:$PATH
 
 export NIX_VERSION=1.8
-NIX_VERSION_FULL=nix-$NIX_VERSION-x86_64-linux
-NIX_ROOT_CACHE_PATH=$CACHE_DIR/nix-mnt/$NIX_VERSION_FULL
+export NIX_VERSION_FULL=nix-$NIX_VERSION-x86_64-linux
+export NIX_ROOT_CACHE_PATH=$CACHE_DIR/nix-mnt/$NIX_VERSION_FULL
 export NIX_ROOT_PATH=$BUILD_DIR/nix-mnt/$NIX_VERSION_FULL
 
 export USER=$(whoami)
@@ -40,18 +40,28 @@ else
 
   mkdir -p $CACHE_DIR/nix-mnt
   cd $CACHE_DIR/nix-mnt
-  fetch nix-1.8.tar.bz2 http://hydra.nixos.org/build/17897595/download/1/${NIX_VERSION_FULL}.tar.bz2
-  tar xjf nix-1.8.tar.bz2
+  fetch nix-${NIX_VERSION}.tar.bz2 http://hydra.nixos.org/build/17897595/download/1/${NIX_VERSION_FULL}.tar.bz2
+  tar xjf nix-${NIX_VERSION}.tar.bz2
   echo "Done extracting." | indent
+  rm nix-${NIX_VERSION}.tar.bz2
 fi
-
-$BUILD_DIR/bin/proot -b $NIX_ROOT_CACHE_PATH:/nix bash $DIR/nix-install-proot \
-  $BUILD_DIR $CACHE_DIR
 
 topic "Copying nix to build dir"
 mkdir -p $NIX_ROOT_PATH
 rsync -a $NIX_ROOT_CACHE_PATH/ $NIX_ROOT_PATH
 
-topic "Complete! Make sure your Procfile uses run_proot.sh,"
+$BUILD_DIR/bin/proot -b $NIX_ROOT_PATH:/nix bash $DIR/nix-install-proot $BUILD_DIR
+
+if [ -z "${NIX_BUILD_ON_PUSH:-}" ]; then
+  topic "Build environment set up."
+  echo "To finish building, run:" | indent
+  echo "$ heroku run --size=PX build" | indent
+  echo
+  echo "Then complete the deploy with:" | indent
+  echo "$ git commit --amend --no-edit" | indent
+  echo "$ git push -f heroku master" | indent
+fi
+
+topic "Make sure your Procfile includes run_proot.sh,"
 echo "like so:" | indent
 echo "web: run_proot.sh myapp -p \$PORT" | indent

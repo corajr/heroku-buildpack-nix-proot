@@ -26,6 +26,9 @@ fi
 export EC2_ACCESS_KEY=$NIX_S3_KEY
 export EC2_SECRET_KEY=$NIX_S3_SECRET
 
+# make sure that nix installs its link in the right place
+export HOME=$BUILD_DIR
+
 if [ -d "/nix/var/nix/profiles/default" ]; then
   rm -f $BUILD_DIR/.nix-profile
   ln -s /nix/var/nix/profiles/default $BUILD_DIR/.nix-profile

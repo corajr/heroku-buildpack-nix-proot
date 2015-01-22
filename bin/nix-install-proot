@@ -40,6 +40,8 @@ cd $BUILD_DIR
 
 try_download_closure
 
+rm -f /tmp/closure_exists
+
 if [ -e $CLOSURE ]; then
   topic "Closure found; downloading."
   nix-store --import < $CLOSURE | indent
@@ -49,6 +51,8 @@ if [ -e $CLOSURE ]; then
 
   topic "Clearing other packages"
   nix-collect-garbage --option gc-keep-derivations false -d 2>&1 | indent
+
+  touch /tmp/closure_exists
 elif [ -n "${NIX_BUILD_ON_PUSH:-}" ]; then
   topic "Build on push active, building now:"
   source $DIR/build

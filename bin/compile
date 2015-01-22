@@ -52,7 +52,7 @@ rsync -a $NIX_ROOT_CACHE_PATH/ $NIX_ROOT_PATH
 
 $BUILD_DIR/bin/proot -b $NIX_ROOT_PATH:/nix bash $DIR/nix-install-proot $BUILD_DIR
 
-if [ -z "${NIX_BUILD_ON_PUSH:-}" ]; then
+if [ -z "${NIX_BUILD_ON_PUSH:-}" ] && [ ! -e /tmp/closure_exists ]; then
   topic "Build environment set up."
   echo "To finish building, run:" | indent
   echo "$ heroku run --size=PX build" | indent

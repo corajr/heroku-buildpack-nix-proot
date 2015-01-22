@@ -58,9 +58,9 @@ CLOSURE_NAME=$PROG_NAME.closure
 CLOSURE=$CACHE_DIR/$PROG_NAME.closure
 
 topic "Searching for closure on S3:"
-if ($AWS ls $NIX_S3_BUCKET | grep nix-closures/$CLOSURE_NAME); then
-  echo "Closure found, downloading to $CLOSURE" | indent
-  $AWS get nix-closures/$CLOSURE_NAME $CLOSURE 2>&1| indent
+
+if ($AWS get $NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME $CLOSURE 2>&1| indent); then
+  echo "Closure downloaded to $CLOSURE" | indent
 else
   echo "Closure not found; will build from scratch." | indent
 fi
@@ -80,7 +80,7 @@ fi
 topic "Building $PROG_NAME from $NIX_FILE"
 
 # nix-build registers app as a garbage collector root -- prevents its being removed
-nix-build --cores 0 -Q $NIX_FILE 2>&1| indent
+nix-build --cores 0 $NIX_FILE 2>&1| indent
 
 topic "Installing application in $PROG_NAME profile"
 nix-env -Q -i -f $NIX_FILE 2>&1| indent

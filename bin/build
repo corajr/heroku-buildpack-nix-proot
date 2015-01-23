@@ -19,9 +19,11 @@ declare -x NIX_ROOT_PATH
 
 if [ "$BUILD_DIR" = "$REAL_APP_DIR" ] || [ ! -w $REAL_APP_DIR ]; then     # we are in a one-off dyno; home is not writable
   rsync -a $BUILD_DIR/nix-mnt /tmp
-  NIX_ROOT_PATH=/tmp/nix-mnt/$NIX_VERSION_FULL
+  export NIX_ROOT_PATH=/tmp/nix-mnt/$NIX_VERSION_FULL
+  export HOME=/tmp/nix-mnt
 else
   NIX_ROOT_PATH=$BUILD_DIR/nix-mnt/$NIX_VERSION_FULL
+  export HOME=$BUILD_DIR
 fi
 
 export NIX_S3_KEY NIX_S3_SECRET NIX_S3_BUCKET

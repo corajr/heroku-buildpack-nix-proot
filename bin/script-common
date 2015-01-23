@@ -75,9 +75,8 @@ prog_name_profile_closure() {
   fi
   export BUILD_DIR
   export nix_file=$(locate_nix_file)
-  prog_name=$(nix-env -qa -f "$nix_file" | head -n 1)
   echo "export NIX_FILE=$nix_file;
-  PROG_NAME=$prog_name;
+  export PROG_NAME=\$(nix-env -qa -f "$nix_file" | head -n 1);
   PROG_PROFILE=/nix/var/nix/profiles/\$PROG_NAME;
   CLOSURE_NAME=\$PROG_NAME.closure;
   CLOSURE=/tmp/\$CLOSURE_NAME"
@@ -101,7 +100,7 @@ try_download_closure() {
   export EC2_SECRET_KEY=$NIX_S3_SECRET
  
   set +e
-  $HOME/bin/aws get $NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME $CLOSURE 2>&1| indent
+  $BUILD_DIR/bin/aws get $NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME $CLOSURE 2>&1| indent
   set -e
 }
 
@@ -110,5 +109,5 @@ upload_closure() {
   export EC2_ACCESS_KEY=$NIX_S3_KEY
   export EC2_SECRET_KEY=$NIX_S3_SECRET
  
-  $HOME/bin/aws get $NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME $CLOSURE 2>&1| indent
+  $BUILD_DIR/bin/aws get $NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME $CLOSURE 2>&1| indent
 }

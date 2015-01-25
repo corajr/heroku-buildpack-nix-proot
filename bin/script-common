@@ -109,5 +109,5 @@ upload_closure() {
   export EC2_ACCESS_KEY=$NIX_S3_KEY
   export EC2_SECRET_KEY=$NIX_S3_SECRET
  
-  $BUILD_DIR/bin/aws get $NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME $CLOSURE 2>&1| indent
+  $BUILD_DIR/bin/aws put $NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME $CLOSURE 2>&1| indent
 }

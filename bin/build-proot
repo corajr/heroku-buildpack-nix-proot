@@ -41,8 +41,13 @@ nix-env --switch-profile $PROG_PROFILE
 test -e $CLOSURE || try_download_closure
 
 if [ -e $CLOSURE ]; then
-  topic "Importing previous environment from $CLOSURE"
+  topic "Trying to import previous environment from $CLOSURE"
+
+  # here it can fail, because we will rebuild everything
+  # in nix-install-proot, however, a failed import is an error
+  set +e
   nix-store --import < $CLOSURE 2>&1| indent
+  set -e
 fi
 
 topic "Building $PROG_NAME from $NIX_FILE"

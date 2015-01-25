@@ -37,22 +37,24 @@ eval $prog
 
 cd $BUILD_DIR
 
-rm -f /tmp/closure_exists
+rm -f /tmp/closure.log
 
 topic "Attempting to download closure"
 try_download_closure
 
 if [ -e $CLOSURE ]; then
   topic "Closure found; importing."
-  nix-store --import < $CLOSURE | indent
+  nix-store --import < $CLOSURE | tee /tmp/closure.log | indent
 
-  topic "Installing $PROG_NAME"
-  nix-env -Q -i -f $NIX_FILE 2>&1| indent
+  PROG_OUTPUT_PATH=$(grep $PROG_NAME /tmp/closure.log | head -n 1)
+
+  topic "Installing $PROG_NAME from closure"
+  # this will only install stored binaries
+  # if actual building is desired, set NIX_BUILD_ON_PUSH
+  nix-env -Q -i -b $PROG_OUTPUT_PATH 2>&1| indent
 
   topic "Clearing other packages"
   nix-collect-garbage --option gc-keep-derivations false -d 2>&1 | indent
-
-  touch /tmp/closure_exists
 elif [ -n "${NIX_BUILD_ON_PUSH:-}" ]; then
   topic "Build on push active, building now:"
   source $DIR/build

@@ -53,7 +53,7 @@ topic "Copying nix to BUILD_DIR"
 mkdir -p $BUILD_DIR/nix-mnt
 rsync -a $NIX_MNT/ $BUILD_DIR/nix-mnt
 
-if [ -z "${NIX_BUILD_ON_PUSH:-}" ] && [ ! -e /tmp/closure_exists ]; then
+if [ -z "${NIX_BUILD_ON_PUSH:-}" ] && [ ! -e /tmp/closure.log ]; then
   topic "Build environment set up."
   echo "To finish building, run:" | indent
   echo "$ heroku run --size=PX build" | indent

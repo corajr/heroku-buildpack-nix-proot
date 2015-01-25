@@ -54,6 +54,8 @@ if [ -e $CLOSURE ]; then
   nix-env -Q -i -b $PROG_OUTPUT_PATH 2>&1| indent
 
   topic "Clearing other packages"
+  rm -rf /nix/var/nix/gcroots/*
+  ln -s $PROG_OUTPUT_PATH /nix/var/nix/gcroots/$PROG_NAME
   nix-collect-garbage --option gc-keep-derivations false -d 2>&1 | indent
 elif [ -n "${NIX_BUILD_ON_PUSH:-}" ]; then
   topic "Build on push active, building now:"

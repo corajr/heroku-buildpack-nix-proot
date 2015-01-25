@@ -26,17 +26,14 @@ download_and_install $CACHE_DIR $BUILD_DIR aws https://raw.githubusercontent.com
 # add executables to path
 export PATH=$BUILD_DIR/bin:$PATH
 
-export NIX_VERSION=1.8
-export NIX_VERSION_FULL=nix-$NIX_VERSION-x86_64-linux
 export NIX_ROOT_CACHE_PATH=$CACHE_DIR/nix-mnt/$NIX_VERSION_FULL
-export NIX_ROOT_PATH=$BUILD_DIR/nix-mnt/$NIX_VERSION_FULL
 
 export USER=$(whoami)
 
 if [ -d "$NIX_ROOT_CACHE_PATH" ]; then
   topic "nix $NIX_VERSION found in cache"
 else
-  topic "Downloading and installing nix $NIX_VERSION to cache"
+  topic "Downloading nix $NIX_VERSION to cache"
 
   mkdir -p $CACHE_DIR/nix-mnt
   cd $CACHE_DIR/nix-mnt
@@ -46,11 +43,15 @@ else
   rm nix-${NIX_VERSION}.tar.bz2
 fi
 
-topic "Copying nix to build dir"
+topic "Copying nix to $NIX_ROOT_PATH"
 mkdir -p $NIX_ROOT_PATH
 rsync -a $NIX_ROOT_CACHE_PATH/ $NIX_ROOT_PATH
 
 $BUILD_DIR/bin/proot -b $NIX_ROOT_PATH:/nix bash $DIR/nix-install-proot $BUILD_DIR
+
+topic "Copying nix to BUILD_DIR"
+mkdir -p $BUILD_DIR/nix-mnt
+rsync -a $NIX_MNT/ $BUILD_DIR/nix-mnt
 
 if [ -z "${NIX_BUILD_ON_PUSH:-}" ] && [ ! -e /tmp/closure_exists ]; then
   topic "Build environment set up."

@@ -38,6 +38,7 @@ nix-env -Q -p $PROG_PROFILE -i $nix
 topic "Switching to $PROG_NAME profile"
 nix-env --switch-profile $PROG_PROFILE
 
+topic "Trying to locate closure"
 test -e $CLOSURE || try_download_closure
 
 if [ -e $CLOSURE ]; then

@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+export NIX_VERSION=1.8
+export NIX_VERSION_FULL=nix-$NIX_VERSION-x86_64-linux
+export NIX_MNT=/tmp/nix-mnt
+export NIX_ROOT_PATH=$NIX_MNT/$NIX_VERSION_FULL
+
 indent() {
   sed -u 's/^/       /'
 }

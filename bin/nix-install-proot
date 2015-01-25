@@ -12,10 +12,9 @@ BUILD_DIR=$1
 
 test -d /nix # fail here if /nix doesn't exist
 
-# pass bulid dir to subsidiary scripts
+# pass build dir to subsidiary scripts
 export BUILD_DIR
-# make sure that nix installs its link in the right place
-export HOME=$BUILD_DIR
+export HOME=$NIX_MNT
 
 suppress_locale_warnings
 
@@ -23,9 +22,9 @@ topic "Installing nix $NIX_VERSION"
 cd /nix
 ./install 2>&1| indent
 
-source $BUILD_DIR/.nix-profile/etc/profile.d/nix.sh
+source $HOME/.nix-profile/etc/profile.d/nix.sh
 
-export PATH=$BUILD_DIR/.nix-profile/bin:$PATH
+export PATH=$HOME/.nix-profile/bin:$PATH
 
 # set $nix to the hash of the nix version in store
 eval $(grep nix= ./install | head -n 1)
@@ -38,12 +37,13 @@ eval $prog
 
 cd $BUILD_DIR
 
-try_download_closure
-
 rm -f /tmp/closure_exists
 
+topic "Attempting to download closure"
+try_download_closure
+
 if [ -e $CLOSURE ]; then
-  topic "Closure found; downloading."
+  topic "Closure found; importing."
   nix-store --import < $CLOSURE | indent
 
   topic "Installing $PROG_NAME"
@@ -58,7 +58,10 @@ elif [ -n "${NIX_BUILD_ON_PUSH:-}" ]; then
   source $DIR/build
 fi
 
-APP_NIX_ROOT_PATH=${REAL_APP_DIR:=/app}/nix-mnt/$NIX_VERSION_FULL
+APP_NIX_ROOT_PATH=$REAL_APP_DIR/nix-mnt/$NIX_VERSION_FULL
+
+topic "Creating symbolic link to /nix in BUILD_DIR"
+ln -s /nix/var/nix/profiles/default $BUILD_DIR/.nix-profile/
 
 topic "Creating .profile.d"
 

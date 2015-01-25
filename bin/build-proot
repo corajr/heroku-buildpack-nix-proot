@@ -50,12 +50,9 @@ topic "Building $PROG_NAME from $NIX_FILE"
 # nix-build registers app as a garbage collector root -- prevents its being removed
 nix-build --cores 0 $NIX_FILE 2>&1| indent
 
-topic "Installing $PROG_NAME"
-nix-env -Q -i -f $NIX_FILE 2>&1| indent
-
 topic "Storing updated application closure in $CLOSURE"
 #swap stdout/stderr so the closure goes to stderr and stderr to stdout
-(nix-store --export $(nix-store -q --references $BUILD_DIR/result | grep -v ghc) 3>&1 1>&2- 2>&3-) 2> $CLOSURE | indent
+(nix-store --export $(nix-store -qR $BUILD_DIR/result) 3>&1 1>&2- 2>&3-) 2> $CLOSURE | indent
 
 topic "Uploading closure to S3"
 upload_closure

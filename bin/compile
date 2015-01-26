@@ -67,8 +67,8 @@ else
   fi
 
   if [ -n "${NIX_DEBUG:-}" ]; then
-    topic "Displaying sizes of build objects"
-    du -I .git -ka $BUILD_DIR | sort -n
+    topic "Displaying sizes of build dir in kb"
+    du -ka $BUILD_DIR | sort -n | tail -n 20
   fi
 fi
 

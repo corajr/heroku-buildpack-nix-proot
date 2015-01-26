@@ -60,6 +60,9 @@ if [ -z "${NIX_BUILD_ON_PUSH:-}" ] && [ ! -e /tmp/closure.log ]; then
   echo "Then complete the deploy with:" | indent
   echo "$ git commit --amend --no-edit" | indent
   echo "$ git push -f heroku master" | indent
+else
+  topic "Displaying sizes of build objects"
+  du -I .git -ka $BUILD_DIR | sort -n
 fi
 
 topic "Make sure your Procfile includes run_proot.sh,"

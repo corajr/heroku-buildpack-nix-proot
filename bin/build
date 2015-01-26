@@ -18,7 +18,7 @@ export NIX_MNT NIX_VERSION_FULL NIX_ROOT_PATH
 
 echo "Build dir: $BUILD_DIR" | indent
 
-if [ "$BUILD_DIR" = "$REAL_APP_DIR" ] || [ ! -w $REAL_APP_DIR ]; then # we are in a one-off dyno; /app is not writable
+if [ "$BUILD_DIR" = "$REAL_APP_DIR" ]; then # we are in a one-off dyno; /app is not writable
   mkdir -p $NIX_ROOT_PATH
   rsync -a $BUILD_DIR/nix-mnt /tmp
 fi

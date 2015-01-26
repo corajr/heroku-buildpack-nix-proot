@@ -15,8 +15,10 @@ export LC_ALL="C"
 
 export USER=$(whoami)
 
-cd /nix
-./install 2>&1| indent
+if [ ! -e $HOME/.nix-defexpr/channels/nixpkgs ]; then
+  cd /nix
+  ./install 2>&1| indent
+fi
 
 check_for_s3
 

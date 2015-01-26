@@ -126,7 +126,16 @@ upload_closure() {
   fi
 }
 
+copy_custom_nix_config() {
+  if [ -e $BUILD_DIR/.nixpkgs/config.nix ]; then
+    mkdir -p $HOME/.nixpkgs
+    cp $BUILD_DIR/.nixpkgs/config.nix $HOME/.nixpkgs/config.nix
+  fi
+}
+
 install_nix() {
+  copy_custom_nix_config
+
   if [ ! -e $HOME/.nix-defexpr/channels/nixpkgs ]; then
     cd /nix
     topic "Installing nix $NIX_VERSION"

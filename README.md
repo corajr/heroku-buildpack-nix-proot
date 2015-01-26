@@ -64,7 +64,8 @@ git push -f heroku master
 Refs
 ----
 
-This approach is almost wholly lifted from Miëtek Bak's [Haskell on Heroku](https://haskellonheroku.com/).
+This approach is heavily inspired by Miëtek Bak's [Haskell on Heroku](https://haskellonheroku.com/),
+simply using Nix instead of Halcyon for installation.
 
 Credit to [Brian McKenna](https://twitter.com/puffnfresh/status/521647022135590913) for the idea of a Nix buildpack.
 

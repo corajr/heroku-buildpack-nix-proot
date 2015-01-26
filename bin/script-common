@@ -104,9 +104,13 @@ try_download_closure() {
   export EC2_ACCESS_KEY=$NIX_S3_KEY
   export EC2_SECRET_KEY=$NIX_S3_SECRET
  
-  set +e
-  $BUILD_DIR/bin/aws get $NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME $CLOSURE 2>&1| indent
-  set -e
+  if [ -d /closures ] && [ -e /closures/$CLOSURE_NAME ]; then # spoof closure transfer
+    ln -s /closures/$CLOSURE_NAME $CLOSURE
+  else
+    set +e
+    $BUILD_DIR/bin/aws get $NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME $CLOSURE 2>&1| indent
+    set -e
+  fi
 }
 
 upload_closure() {
@@ -114,5 +118,9 @@ upload_closure() {
   export EC2_ACCESS_KEY=$NIX_S3_KEY
   export EC2_SECRET_KEY=$NIX_S3_SECRET
  
-  $BUILD_DIR/bin/aws put $NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME $CLOSURE 2>&1| indent
+  if [ -d /closures ]; then # spoof closure transfer
+    cp $CLOSURE /closures/
+  else
+    $BUILD_DIR/bin/aws put $NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME $CLOSURE 2>&1| indent
+  fi
 }

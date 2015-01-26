@@ -18,9 +18,7 @@ export HOME=$NIX_MNT
 
 suppress_locale_warnings
 
-topic "Installing nix $NIX_VERSION"
-cd /nix
-./install 2>&1| indent
+install_nix
 
 source $HOME/.nix-profile/etc/profile.d/nix.sh
 

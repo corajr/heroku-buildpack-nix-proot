@@ -29,8 +29,6 @@ export PATH=$BUILD_DIR/bin:$PATH
 export NIX_ROOT_CACHE_PATH=$CACHE_DIR/nix-mnt/$NIX_VERSION_FULL
 export REAL_APP_DIR=${REAL_APP_DIR:-/app}
 
-export USER=$(whoami)
-
 if [ -d "$NIX_ROOT_CACHE_PATH" ]; then
   topic "nix $NIX_VERSION found in cache"
 else

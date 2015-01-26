@@ -21,6 +21,7 @@ echo "Build dir: $BUILD_DIR" | indent
 if [ "$BUILD_DIR" = "$REAL_APP_DIR" ]; then # we are in a one-off dyno; /app is not writable
   mkdir -p $NIX_ROOT_PATH
   rsync -a $BUILD_DIR/nix-mnt /tmp
+  export HOME=$NIX_MNT
 fi
 
 export NIX_S3_KEY NIX_S3_SECRET NIX_S3_BUCKET

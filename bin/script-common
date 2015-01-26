@@ -4,6 +4,7 @@ export NIX_VERSION=1.8
 export NIX_VERSION_FULL=nix-$NIX_VERSION-x86_64-linux
 export NIX_MNT=/tmp/nix-mnt
 export NIX_ROOT_PATH=$NIX_MNT/$NIX_VERSION_FULL
+export USER=$(whoami)
 
 indent() {
   sed -u 's/^/       /'
@@ -122,5 +123,15 @@ upload_closure() {
     cp $CLOSURE /closures/$CLOSURE_NAME
   else
     $BUILD_DIR/bin/aws put $NIX_S3_BUCKET/nix-closures/$CLOSURE_NAME $CLOSURE 2>&1| indent
+  fi
+}
+
+install_nix() {
+  if [ ! -e $HOME/.nix-defexpr/channels/nixpkgs ]; then
+    cd /nix
+    topic "Installing nix $NIX_VERSION"
+    ./install 2>&1| indent
+  else
+    topic "Nix found"
   fi
 }

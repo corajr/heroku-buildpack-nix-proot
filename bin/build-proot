@@ -15,10 +15,8 @@ export LC_ALL="C"
 
 export USER=$(whoami)
 
-if [ ! -e $HOME/.nix-profile ]; then
-  cd /nix
-  ./install 2>&1| indent
-fi
+cd /nix
+./install 2>&1| indent
 
 check_for_s3
 

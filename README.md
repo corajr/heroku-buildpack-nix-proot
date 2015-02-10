@@ -61,6 +61,9 @@ git commit --amend --no-edit
 git push -f heroku master
 ```
 
+See https://github.com/chrisjr/heroku-deploy-nix-example for a trivial
+complete example.
+
 Refs
 ----
 

@@ -1,6 +1,12 @@
 heroku-buildpack-nix-proot
 ==========================
 
+# DEPRECATION WARNING:
+
+This repo is left up for historical interest, but is presently unmaintained. If you are interested in this approach, I suggest you check out [ocharles' fork](https://github.com/ocharles/heroku-buildpack-nix-proot) which uses Hydra in lieu of S3 for cached binaries.
+
+----------
+
 This buildpack installs dependencies using the [Nix](http://nixos.org/nix) package manager.
 Nix has a binary cache of many dependencies (including GHC and many Haskell libraries),
 with the potential to greatly accelerate the build process.

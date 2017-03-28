@@ -24,7 +24,7 @@ web: run_proot.sh myapp
 Then create your application on Heroku, setting the S3 access info as follows:
 
 ```bash
-heroku create -b https://github.com/chrisjr/heroku-buildpack-nix-proot.git
+heroku create -b https://github.com/corajr/heroku-buildpack-nix-proot.git
 heroku config:set NIX_S3_KEY=... \
                   NIX_S3_SECRET=... \
                   NIX_S3_BUCKET=...
@@ -61,7 +61,7 @@ git commit --amend --no-edit
 git push -f heroku master
 ```
 
-See https://github.com/chrisjr/heroku-deploy-nix-example for a trivial
+See https://github.com/corajr/heroku-deploy-nix-example for a trivial
 complete example.
 
 Refs
